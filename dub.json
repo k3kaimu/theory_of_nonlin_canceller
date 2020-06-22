@@ -1,0 +1,6 @@
+{
+    "name": "analysis",
+    "dependencies": {
+        "deint": "~>0.3.3"
+    }
+}
