@@ -1,4 +1,6 @@
-# Theoretical Analysis Program for ``Theoretical Performance Analysis of In-Band Full-Duplex Communications with Nonlinear Self-Interference Canceller''
+# Theoretical Analysis Program for ``Theoretical Analysis of In-Band Full-Duplex Radios with Parallel Hammerstein Self-Interference Cancellers''
+
+This is the source code of my paper "Theoretical Analysis of In-Band Full-Duplex Radios with Parallel Hammerstein Self-Interference Canceller" published on IEEE Transactions on Wireless Communications.
 
 The author has confirmed that this program can compile and run on Ubuntu (on Windows Subsystem for Linux (WSL) 2).
 I haven't checked it in other environments, but it seems to work fine.
@@ -47,3 +49,9 @@ After install python3 and the libraries, run following commands:
 $ cd plot
 $ sh ./run.sh
 ```
+
+
+## Citation
+
+Kazuki Komatsu, Yuichi Miyaji, Hideyuki Uehara, ``Theoretical Analysis of In-Band Full-Duplex Radios with Parallel Hammerstein Self-Interference Cancellers,'' IEEE Transactions on Wireless Communications, (Early Access).
+
