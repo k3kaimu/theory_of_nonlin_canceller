@@ -21,11 +21,22 @@ auto makeRapp(R vsat, R sf)
 
 auto makeSaleh(R vsat, R phisat)
 {
+    //return delegate(C x) {
+    //    immutable r = std.complex.abs(x),
+    //              u = x / r;    // unit vector
+
+    //    return vsat * normalized_saleh(r / vsat, phisat) * u;
+    //};
+    immutable R a1 = 1,
+                a2 = 2*phisat/4/vsat/vsat,
+                b1 = 1.0/4/vsat/vsat,
+                b2 = b1;
+
     return delegate(C x) {
         immutable r = std.complex.abs(x),
                   u = x / r;    // unit vector
 
-        return vsat * normalized_saleh(r / vsat, phisat) * u;
+        return cast(C)(a1 * x / (1 + b1 * r^^2) * std.complex.expi(a2*r^^2/(1 + b2*r^^2)));
     };
 }
 
@@ -39,10 +50,12 @@ void main()
 
     static auto makeRapp3(R v) { return makeRapp(v, 3); }
     static auto makeSalehPI6(R v) { return makeSaleh(v, PI/6); }
+    static auto makeSaleh0(R v) { return makeSaleh(v, 0); }
 
     typeof(&makeRapp3)[string] genNLFuncAA;
     genNLFuncAA["Rapp"] = &makeRapp3;
     genNLFuncAA["Saleh"] = &makeSalehPI6;
+    genNLFuncAA["Saleh_noPM"] = &makeSaleh0;
 
     Parameter defaultSetting;
     with(defaultSetting) {
@@ -54,6 +67,7 @@ void main()
         T1.P = 7;
         T1.OS_RATE = OS_RATE * 64 / 52;
         T1.M_QAM = 16;
+        T1.IRR = real.infinity;
 
         T2 = T1;        // symmetric (T1 == T2)
         rho21 = (-70.0).dBToVGain;
@@ -112,6 +126,30 @@ void main()
             import std.file : write;
             write("sweep_backoff_%s.json".format(iden), JSONValue(results).toString());
         }
+
+        // sweep back-off with IRR = 25 dB
+        {
+            JSONValue[string] results; 
+            foreach(P; iota(1, 9, 2)) {
+                JSONValue[] list;
+                foreach(ibo_dB; linspace(-5.0L, 25.0L, 300)) {
+                    Parameter param = setting;
+                    param.T1.g = vsat_alpha / ibo_dB.dBToVGain;
+                    param.T1.P = P;
+                    param.T1.IRR = 10.0^^(25.0/10);
+                    param.T2 = param.T1;
+
+                    auto result = analyze(param);
+                    JSONValue res = result.toJSONValue();
+                    res["ibo_dB"] = ibo_dB;
+                    list ~= res;
+                }
+                results[P.to!string] = JSONValue(list);
+            }
+
+            import std.file : write;
+            write("sweep_backoff_%s_withIRR25dB.json".format(iden), JSONValue(results).toString());
+        }
     }
 
     // sweep smoothness factor of Rapp model
@@ -135,5 +173,29 @@ void main()
 
         import std.file : write;
         write("sweep_sf_Rapp.json", JSONValue(results).toString(JSONOptions.specialFloatLiterals));
+    }
+
+    // sweep smoothness factor of Rapp model with IRR = 25dB
+    {
+        JSONValue[string] results; 
+        foreach(P; iota(1, 9, 2)) {
+            JSONValue[] list;
+            foreach(sf; linspace(0.1L, 6.0L, 300).chain(only(real.infinity))) {
+                Parameter param = defaultSetting;
+                param.T1.alpha = makeRapp(vsat_alpha, sf);
+                param.T1.P = P;
+                param.T1.IRR = 10.0^^(25.0/10);
+                param.T2 = param.T1;
+
+                auto result = analyze(param);
+                JSONValue res = result.toJSONValue();
+                res["sf"] = sf;
+                list ~= res;
+            }
+            results[P.to!string] = JSONValue(list);
+        }
+
+        import std.file : write;
+        write("sweep_sf_Rapp_withIRR25dB.json", JSONValue(results).toString(JSONOptions.specialFloatLiterals));
     }
 }

@@ -27,6 +27,7 @@ struct Transceiver
     uint P;                 /// Order of canceller
     R OS_RATE;              /// Ratio of bandwidth of all active subcarriers and sampling rate
     uint M_QAM;             /// use M-ary QAM
+    R IRR;                  /// image rejection rate
 }
 
 
@@ -100,6 +101,8 @@ Result analyze(Parameter param)
     auto alpha = [param.T1.alpha, param.T2.alpha],
          beta = [param.T1.beta, param.T2.beta];
 
+    immutable IRR = [param.T1.IRR, param.T2.IRR];
+
     immutable MAX_P = max(P[0], P[1]) + 10;
 
 
@@ -138,7 +141,7 @@ Result analyze(Parameter param)
     immutable R[2] N_tot = make12_21((i, j) => beta_11[i].sqAbs * N_T[i] + N_NL[i]);
 
     Result result;
-    result.SICR = (I_11[0] + N_tot[0]) / (I_11_R[0] + N_tot[0]);
+    result.SICR = (I_11[0] + N_tot[0]) / (I_11_R[0] + I_11[0]/IRR[0]*2 + N_tot[0]);
     result.txpower = nu;
     result.residual = I_11_R;
     result.N_tot = N_tot;
